@@ -217,17 +217,4 @@ ChatServer/
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 打开 Pull Request
 
-## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
-## 📞 联系方式
-
-如有问题或建议，请通过以下方式联系：
-- 提交 Issue
-- 发送邮件
-- 创建 Pull Request
-
----
-
-**注意**: 这是一个学习和演示项目，生产环境使用前请进行充分的安全性和性能测试。
