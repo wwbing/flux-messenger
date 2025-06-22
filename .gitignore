@@ -1,82 +1,18 @@
-# Build directories
-*/build/
+# 递归忽略所有 .cache 目录
+**/.cache/
 
-# Cache directories
-*/.cache/
+# 递归忽略所有 build 目录
+**/build/
 
-# vcpkg installed packages
-*/vcpkg_installed/
+# 递归忽略所有 vcpkg安装的依赖库目录
+**/vcpkg_installed/
 
-# Compiled binaries
-*.out
-*.exe
-*.o
-*.obj
-*.so
-*.dll
-*.dylib
-*.a
-*.lib
-
-# CMake generated files
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-Makefile
-compile_commands.json
-vcpkg-manifest-install.log
+# IDE 和插件对应文件
+**/.cursor/
+**/.clangd
+**/.clang-format
+**/.vscode/
 
 
-
-# Configuration files with sensitive data
-# config.ini (uncomment if contains sensitive data)
-
-# Log files
-*.log
-
-# Temporary files
-*.tmp
-*.swp
-*.swo
-*~
-
-# IDE specific files
-.cursor/
-*/.cursor/
-.clangd
-*/.clangd
-.clang-format
-*/.clang-format
-.vscode/
-.idea/
-*.user
-*.vcxproj.user
-
-# Node.js (for VarifyServer)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.yarn-integrity
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Core dumps
-core
-core.*
-vgcore.*
+# node js 安装的三方库
+**/node_modules/
