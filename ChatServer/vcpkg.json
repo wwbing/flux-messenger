@@ -1,0 +1,18 @@
+{
+    "name": "gateserver",
+    "version": "1.0.0",
+    "dependencies": [
+      "fmt",
+      "jsoncpp",
+      "boost-filesystem",
+      "boost-system",
+      "boost-beast",
+      "boost-uuid",
+      "boost-property-tree",
+      "boost-asio",
+      "grpc",
+      "mysql-connector-cpp",
+      "hiredis"
+    ],
+    "builtin-baseline": "054637a2ae63c6c647b3169251759910cc4c984a"
+}

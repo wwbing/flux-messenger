@@ -1,0 +1,21 @@
+{
+    "email": {
+      "user": "jiahaotechfu@163.com",
+      "pass": "LXnG6EVKM3DkpKuP"
+    },
+
+    "mysql": {
+      "host": "127.0.0.1",
+      "port": 3306,
+      "passwd": "jiahao888"
+    },
+
+    "redis":{
+      "host": "127.0.0.1",
+      "port": 6379,
+      "passwd": "jiahao888"
+    }
+}
+
+
+  
