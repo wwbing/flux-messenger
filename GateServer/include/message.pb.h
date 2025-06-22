@@ -5,11 +5,6 @@
 #ifndef GOOGLE_PROTOBUF_INCLUDED_message_2eproto_2epb_2eh
 #define GOOGLE_PROTOBUF_INCLUDED_message_2eproto_2epb_2eh
 
-// 解决 INTERNAL 宏冲突问题
-#ifdef INTERNAL
-#undef INTERNAL
-#endif
-
 #include <limits>
 #include <string>
 #include <type_traits>

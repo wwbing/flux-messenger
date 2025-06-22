@@ -4,11 +4,6 @@
 #ifndef GRPC_message_2eproto__INCLUDED
 #define GRPC_message_2eproto__INCLUDED
 
-// 解决 INTERNAL 宏冲突问题
-#ifdef INTERNAL
-#undef INTERNAL
-#endif
-
 #include "message.pb.h"
 
 #include <functional>

@@ -1,12 +1,13 @@
 #pragma once
-
-#include "grpc_macros.h"
 #include <string>
 #include <iostream>
 #include <memory>
+#include <queue>
+#include <condition_variable>
 #include "const.h"
 #include "Singleton.h"
 #include "ConfigMgr.h"
+#include "grpc_macros.h"
 #include "message.grpc.pb.h"
 #include "message.pb.h"
 
@@ -24,13 +25,22 @@ class StatusConPool {
 public:
 	StatusConPool(size_t poolSize, std::string host, std::string port)
 		: poolSize_(poolSize), host_(host), port_(port), b_stop_(false) {
+		std::string target = host + ":" + port;
+		std::cout << "StatusConPool creating " << poolSize << " connections to: " << target << std::endl;
+		
+		// 创建gRPC channel参数，强制使用指定地址
+		grpc::ChannelArguments args;
+		args.SetString(GRPC_ARG_DEFAULT_AUTHORITY, target);
+		args.SetInt(GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL, 1);
+		
 		for (size_t i = 0; i < poolSize_; ++i) {
-
-			std::shared_ptr<Channel> channel = grpc::CreateChannel(host + ":" + port,
-				grpc::InsecureChannelCredentials());
-
+			std::shared_ptr<Channel> channel = grpc::CreateCustomChannel(target,
+				grpc::InsecureChannelCredentials(), args);
+			
+			std::cout << "StatusConPool connection " << (i+1) << " created for target: " << target << std::endl;
 			connections_.push(StatusService::NewStub(channel));
 		}
+		std::cout << "StatusConPool initialization completed with " << poolSize << " connections" << std::endl;
 	}
 
 	~StatusConPool() {

@@ -121,8 +121,8 @@ npm install
 ```bash
 # 对每个C++服务执行
 mkdir build && cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=$VCPKG_HOME/scripts/buildsystems/vcpkg.cmake ../
-make
+cmake -DCMAKE_TOOLCHAIN_FILE=$VCPKG_HOME/scripts/buildsystems/vcpkg.cmake ../ && make -j32
+cp ../include/config.ini ./
 ```
 
 #### 2. 启动服务
@@ -132,23 +132,22 @@ make
 ```bash
 # 1. 启动验证服务
 cd VarifyServer
-npm start
+npm run server
 
 # 2. 启动状态服务
 cd StatusServer/build
-./StatusServer
+./main.out
 
 # 3. 启动网关服务
 cd GateServer/build
-./GateServer
+./main.out
 
 # 4. 启动聊天服务
 cd ChatServer/build
-./ChatServer
-
+./main.out
 # 5. 启动聊天服务2（可选，用于集群）
 cd ChatServer2/build
-./ChatServer
+./main.out
 ```
 
 ## 📁 项目结构
