@@ -1,13 +1,10 @@
 # Build directories
-build/
 */build/
 
 # Cache directories
-.cache/
 */.cache/
 
 # vcpkg installed packages
-vcpkg_installed/
 */vcpkg_installed/
 
 # Compiled binaries
