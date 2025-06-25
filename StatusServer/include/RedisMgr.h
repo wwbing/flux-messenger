@@ -23,7 +23,7 @@ public:
 
 			auto reply = (redisReply*)redisCommand(context, "AUTH %s", pwd);
 			if (reply->type == REDIS_REPLY_ERROR) {
-				std::cout << "验证失败" << std::endl;
+				std::cout << "Redis 验证失败" << std::endl;
 				//执行成功 返回redisCommand执行结果redisReply占用的内存
 				freeReplyObject(reply);
 				continue;
@@ -31,7 +31,7 @@ public:
 
 			//执行成功 返回redisCommand执行结果redisReply占用的内存
 			freeReplyObject(reply);
-			std::cout << "验证成功" << std::endl;
+			std::cout << "Redis 验证成功" << std::endl;
 			connections_.push(context);
 		}
 
@@ -192,7 +192,7 @@ private:
 
 		auto reply = (redisReply*)redisCommand(context, "AUTH %s", pwd_);
 		if (reply->type == REDIS_REPLY_ERROR) {
-			std::cout << "验证失败" << std::endl;
+			std::cout << "Redis 验证失败" << std::endl;
 			//执行不返回
 			freeReplyObject(reply);
 			redisFree(context);
@@ -201,7 +201,7 @@ private:
 
 		//执行成功返回redisCommand执行结果redisReply占用的内存
 		freeReplyObject(reply);
-		std::cout << "验证成功" << std::endl;
+		std::cout << "Redis 验证成功" << std::endl;
 		returnConnection(context);
 		return true;
 	}
@@ -217,16 +217,18 @@ private:
 			connections_.pop();
 			try {
 				auto reply = (redisReply*)redisCommand(context, "PING");
-				if (!reply) {
-					std::cout << "reply is null, redis ping failed: " << std::endl;
+                if (!reply)
+                {
+                    std::cout << "回复为空，redis ping失败: " << std::endl;
 					connections_.push(context);
 					continue;
 				}
 				freeReplyObject(reply);
 				connections_.push(context);
 			}
-			catch(std::exception& exp){
-				std::cout << "Error keeping connection alive: " << exp.what() << std::endl;
+            catch (std::exception &exp)
+            {
+                std::cout << "保持连接活跃错误: " << exp.what() << std::endl;
 				redisFree(context);
 				context = redisConnect(host_, port_);
 				if (context == nullptr || context->err != 0) {
@@ -238,7 +240,7 @@ private:
 
 				auto reply = (redisReply*)redisCommand(context, "AUTH %s", pwd_);
 				if (reply->type == REDIS_REPLY_ERROR) {
-					std::cout << "验证失败" << std::endl;
+					std::cout << "Redis 验证失败" << std::endl;
 					//执行成功 返回redisCommand执行结果redisReply占用的内存
 					freeReplyObject(reply);
 					continue;
@@ -246,7 +248,7 @@ private:
 
 				//执行成功 返回redisCommand执行结果redisReply占用的内存
 				freeReplyObject(reply);
-				std::cout << "验证成功" << std::endl;
+				std::cout << "Redis 验证成功" << std::endl;
 				connections_.push(context);
 			}
 		}

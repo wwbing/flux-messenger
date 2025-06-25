@@ -17,13 +17,13 @@ MySqlPool::MySqlPool(const std::string &url, const std::string &user, const std:
         {
             // MySQL X DevAPI format: mysqlx://user:password@host:port/schema
             std::string connection_url = "mysqlx://" + user_ + ":" + pass_ + "@" + url_ + "/" + schema_;
-            std::cout << "尝试建立MySQL X Protocol连接：" << url_ << std::endl;
+            spdlog::info("尝试建立MySQL X Protocol连接：{}", url_);
             auto session = std::make_shared<mysqlx::Session>(connection_url);
 
             auto currentTime = std::chrono::system_clock::now().time_since_epoch();
             long long timestamp = std::chrono::duration_cast<std::chrono::seconds>(currentTime).count();
             pool_.push(std::make_unique<SqlConnection>(session, timestamp));
-            std::cout << "初始化MySQL连接成功：" << i << std::endl;
+            spdlog::info("初始化MySQL连接成功：{}", i);
         }
 
         _check_thread = std::thread([this]()
@@ -37,7 +37,7 @@ MySqlPool::MySqlPool(const std::string &url, const std::string &user, const std:
     }
     catch (const mysqlx::Error &e)
     {
-        std::cout << "MySQL连接初始化失败：" << e.what() << std::endl;
+        spdlog::error("MySQL连接初始化失败：{}", e.what());
         throw e; // 重新抛出异常，这样上层可以知道初始化失败
     }
 }
@@ -203,7 +203,7 @@ int MysqlDao::RegUserTransaction(const std::string& name, const std::string& ema
         
         if (res_email.fetchOne()) {
             con->_session->rollback();
-            std::cout << "邮箱 " << email << " 已存在" << std::endl;
+            spdlog::error("邮箱 {} 已存在", email);
             return 0;
         }
 
@@ -214,7 +214,7 @@ int MysqlDao::RegUserTransaction(const std::string& name, const std::string& ema
         
         if (res_name.fetchOne()) {
             con->_session->rollback();
-            std::cout << "用户名 " << name << " 已存在" << std::endl;
+            spdlog::error("用户名 {} 已存在", name);
             return 0;
         }
 
@@ -226,7 +226,7 @@ int MysqlDao::RegUserTransaction(const std::string& name, const std::string& ema
         mysqlx::Row row_uid = res_uid.fetchOne();
         
         if (!row_uid) {
-            std::cout << "从 user_id 表获取 id 失败" << std::endl;
+            spdlog::error("从 user_id 表获取 id 失败");
             con->_session->rollback();
             return -1;
         }
@@ -239,11 +239,11 @@ int MysqlDao::RegUserTransaction(const std::string& name, const std::string& ema
             .execute();
 
         con->_session->commit();
-        std::cout << "新用户信息插入成功" << std::endl;
+        spdlog::info("新用户信息插入成功");
         return newId;
     }
     catch (const mysqlx::Error &e) {
-        std::cout << "注册用户事务失败：" << e.what() << std::endl;
+        spdlog::error("注册用户事务失败：{}", e.what());
         try {
             con->_session->rollback();
         }
@@ -275,7 +275,7 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email)
         return email == row[0].get<std::string>();
     }
     catch (const mysqlx::Error &e) {
-        std::cout << "检查邮箱失败：" << e.what() << std::endl;
+        spdlog::error("检查邮箱失败：{}", e.what());
         return false;
     }
 }
@@ -297,82 +297,72 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& newpwd)
         return res.getAffectedItemsCount() > 0;
     }
     catch (const mysqlx::Error &e) {
-        std::cout << "更新密码失败：" << e.what() << std::endl;
+        spdlog::error("更新密码失败：{}", e.what());
         return false;
     }
 }
 
 bool MysqlDao::CheckPwd(const std::string& email, const std::string& pwd, UserInfo& userInfo)
 {
-    std::cout << "开始检查密码，邮箱：" << email << std::endl;
+    spdlog::info("开始检查密码，邮箱：{}", email);
     
     auto con = pool_->getConnection();
     if (!con) {
-        std::cout << "获取数据库连接失败" << std::endl;
+        spdlog::error("获取数据库连接失败");
         return false;
     }
     
-    std::cout << "成功获取数据库连接" << std::endl;
+    spdlog::info("成功获取数据库连接");
 
-    Defer defer([this, &con]()
-                { 
-                    std::cout << "归还数据库连接" << std::endl;
-                    pool_->returnConnection(std::move(con)); 
-                });
+    //RAII： defer析构的时候调用这个回调
+    Defer defer(
+        [this, &con]()
+        { 
+            spdlog::info("归还数据库连接");
+            pool_->returnConnection(std::move(con));
+        }
+    );
 
     try {
-        std::cout << "执行SQL查询: SELECT * FROM user WHERE email = " << email << std::endl;
+        spdlog::info("执行SQL查询: SELECT * FROM user WHERE email = {}", email);
         
-        mysqlx::SqlResult res = con->_session->sql("SELECT * FROM user WHERE email = ?")
-            .bind(email)
-            .execute();
-
-        std::cout << "SQL查询执行完成，获取结果行" << std::endl;
+        mysqlx::SqlResult res = con->_session->sql("SELECT * FROM user WHERE email = ?").bind(email).execute();
         
         mysqlx::Row row = res.fetchOne();
         if (!row) {
-            std::cout << "未找到匹配的用户记录，邮箱：" << email << std::endl;
+            spdlog::error("未找到匹配的用户记录，邮箱：{}", email);
             return false;
         }
         
-        std::cout << "找到用户记录，开始验证密码" << std::endl;
+        spdlog::info("找到用户记录，开始验证密码");
 
         std::string stored_pwd = row[4].get<std::string>();  // 假设pwd是第4列
-        std::cout << "数据库中存储的密码：" << stored_pwd << std::endl;
-        std::cout << "用户提供的密码：" << pwd << std::endl;
+        spdlog::info("数据库中存储的密码：{}", stored_pwd);
+        spdlog::info("用户提供的密码：{}", pwd);
         
         if (pwd != stored_pwd) {
-            std::cout << "密码验证失败" << std::endl;
+            spdlog::error("密码验证失败");
             return false;
         }
         
-        std::cout << "密码验证成功，填充用户信息" << std::endl;
-
         userInfo.uid = row[1].get<int>();
         userInfo.name = row[2].get<std::string>();
         userInfo.email = row[3].get<std::string>();
         userInfo.pwd = stored_pwd;
-
-        std::cout << "用户信息详情：" << std::endl;
-        std::cout << "UID: " << userInfo.uid << std::endl;
-        std::cout << "姓名: " << userInfo.name << std::endl;
-        std::cout << "邮箱: " << userInfo.email << std::endl;
-        std::cout << "密码: " << userInfo.pwd << std::endl;
-
-        std::cout << "密码检查成功完成" << std::endl;
+        
         return true;
     }
     catch (const mysqlx::Error &e) {
-        std::cout << "检查密码时发生MySQL错误：" << e.what() << std::endl;
-        std::cout << "错误代码：" << e.what() << std::endl;
+        spdlog::error("检查密码时发生MySQL错误：{}", e.what());
+        spdlog::error("错误代码：{}", e.what());
         return false;
     }
     catch (const std::exception &e) {
-        std::cout << "检查密码时发生标准异常：" << e.what() << std::endl;
+        spdlog::error("检查密码时发生标准异常：{}", e.what());
         return false;
     }
     catch (...) {
-        std::cout << "检查密码时发生未知异常" << std::endl;
+        spdlog::error("检查密码时发生未知异常");
         return false;
     }
 }
@@ -406,7 +396,7 @@ bool MysqlDao::TestProcedure(const std::string& email, int& uid, std::string& na
         return true;
     }
     catch (const mysqlx::Error &e) {
-        std::cout << "测试存储过程失败：" << e.what() << std::endl;
+        spdlog::error("测试存储过程失败：{}", e.what());
         return false;
     }
 }

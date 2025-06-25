@@ -5,16 +5,18 @@
 #include "RedisMgr.h"
 #include "ConfigMgr.h"
 
-CServer::CServer(boost::asio::io_context& io_context, short port):_io_context(io_context), _port(port),
-_acceptor(io_context, tcp::endpoint(tcp::v4(),port)), _timer(_io_context, std::chrono::seconds(60))
+CServer::CServer(boost::asio::io_context &io_context, short port)
+    : _io_context(io_context),
+      _port(port),
+      _acceptor(io_context, tcp::endpoint(tcp::v4(),port)), _timer(_io_context, std::chrono::seconds(60))
 {
-	cout << "Server start success, listen on port : " << _port << endl;
+	cout << "ChatServer 2 å¯åŠ¨æˆåŠŸ, æ­£åœ¨ç›‘å¬ç«¯å£ : " << _port << endl;
 
 	StartAccept();
 }
 
 CServer::~CServer() {
-	cout << "Server destruct listen on port : " << _port << endl;
+	cout << "ChatServer 2 å…³é—­æˆåŠŸ, å…³é—­ç›‘å¬ç«¯å£ : " << _port << endl;
 	
 }
 
@@ -25,26 +27,30 @@ void CServer::HandleAccept(shared_ptr<CSession> new_session, const boost::system
 		_sessions.insert(make_pair(new_session->GetSessionId(), new_session));
 	}
 	else {
-		cout << "session accept failed, error is " << error.what() << endl;
+		cout << "Tcpé•¿è¿æ¥å»ºç«‹å¤±è´¥:accept fail " << error.what() << endl;
 	}
 
 	StartAccept();
 }
 
-void CServer::StartAccept() {
+void CServer::StartAccept()
+{
+    /*
+		å’Œå®¢æˆ·ç«¯ç™»å½•çš„httpè¯·æ±‚åŒç†ï¼Œè¿™é‡Œå¯¹åº”çš„æ˜¯ç”¨ iocæ± ä¸­çš„32ä¸ªiocæ¥ç®¡ç†å¾ˆå¤šå¾ˆå¤šä¸ªtcpæ± çš„tcpé•¿è¿æ¥ï¼ˆæ¯ä¸ªCSessionå®ä¾‹å¯¹åº”ä¸€ä¸ªtcpé•¿è¿æ¥ï¼‰
+	*/
 	auto &io_context = AsioIOServicePool::GetInstance()->GetIOService();
 	shared_ptr<CSession> new_session = make_shared<CSession>(io_context, this);
 	_acceptor.async_accept(new_session->GetSocket(), std::bind(&CServer::HandleAccept, this, new_session, placeholders::_1));
 }
 
-//¸ù¾İsession µÄidÉ¾³ısession£¬²¢ÒÆ³ıÓÃ»§ºÍsessionµÄ¹ØÁª
+// æ¸…ç†sessionï¼Œæ ¹æ®idåˆ é™¤sessionï¼Œå¹¶ç§»é™¤ç”¨æˆ·çš„sessionå…³è”å…³ç³»
 void CServer::ClearSession(std::string session_id) {
 	
 	lock_guard<mutex> lock(_mutex);
 	if (_sessions.find(session_id) != _sessions.end()) {
 		auto uid = _sessions[session_id]->GetUserId();
 
-		//ÒÆ³ıÓÃ»§ºÍsessionµÄ¹ØÁª
+		// ç§»é™¤ç”¨æˆ·çš„sessionå…³è”å…³ç³»
 		UserMgr::GetInstance()->RmvUserSession(uid, session_id);
 	}
 
@@ -52,7 +58,7 @@ void CServer::ClearSession(std::string session_id) {
 	
 }
 
-//¸ù¾İÓÃ»§»ñÈ¡session
+// æ ¹æ®ç”¨æˆ·idè·å–session
 shared_ptr<CSession> CServer::GetSession(std::string uuid) {
 	lock_guard<mutex> lock(_mutex);
 	auto it = _sessions.find(uuid);
@@ -74,7 +80,7 @@ bool CServer::CheckValid(std::string uuid)
 
 void CServer::on_timer(const boost::system::error_code& ec) {
 	if (ec) {
-		std::cout << "timer error: " << ec.message() << std::endl;
+		std::cout << "å®šæ—¶å™¨é”™è¯¯: " << ec.message() << std::endl;
 		return;
 	}
 
@@ -91,9 +97,9 @@ void CServer::on_timer(const boost::system::error_code& ec) {
 	for (auto iter = sessions_copy.begin(); iter != sessions_copy.end(); iter++) {
 		auto b_expired = iter->second->IsHeartbeatExpired(now);
 		if (b_expired) {
-			//¹Ø±Õsocket, ÆäÊµÕâÀïÒ²»á´¥·¢async_readµÄ´íÎó´¦Àí
+			//å…³é—­socket, å®é™…ä¸Šä¹Ÿä¼šè§¦å‘async_readçš„ç»“æŸ
 			iter->second->Close();
-			//ÊÕ¼¯¹ıÆÚĞÅÏ¢
+			//è®°å½•è¿‡æœŸsessionä¿¡æ¯
 			_expired_sessions.push_back(iter->second);
 			continue;
 		}
@@ -101,19 +107,20 @@ void CServer::on_timer(const boost::system::error_code& ec) {
 	}
 
 
-	//ÉèÖÃsessionÊıÁ¿
+	//ä¸ŠæŠ¥sessionæ•°é‡
 	auto& cfg = ConfigMgr::Inst();
 	auto self_name = cfg["SelfServer"]["Name"];
-	auto count_str = std::to_string(session_count);
+    auto count_str = std::to_string(session_count);
+    cout<<"å®šæ—¶å™¨ä¸ŠæŠ¥ChatServer2 çš„è¿æ¥æ•°åˆ°redisä¸­ï¼Œå½“å‰è¿æ¥æ•°: "<<count_str<<endl;
 	RedisMgr::GetInstance()->HSet(LOGIN_COUNT, self_name, count_str);
 
-	//´¦Àí¹ıÆÚsession, µ¥¶ÀÌá³ö£¬·ÀÖ¹ËÀËø
+	// å¤„ç†å¼‚å¸¸sessionï¼Œé˜²æ­¢èµ„æºæ³„æ¼
 	for (auto &session : _expired_sessions) {
 		session->DealExceptionSession();
 	}
 	
-	//ÔÙ´ÎÉèÖÃ£¬ÏÂÒ»¸ö60s¼ì²â
-	_timer.expires_after(std::chrono::seconds(60));
+	// å†æ¬¡å®šæ—¶ï¼Œä¸‹ä¸€æ¬¡10så
+	_timer.expires_after(std::chrono::seconds(10));
 	_timer.async_wait([this](boost::system::error_code ec) {
 		on_timer(ec);
 	});
@@ -121,7 +128,7 @@ void CServer::on_timer(const boost::system::error_code& ec) {
 
 void CServer::StartTimer()
 {
-	//Æô¶¯¶¨Ê±Æ÷
+	// å¯åŠ¨å®šæ—¶å™¨
 	auto self(shared_from_this());
 	_timer.async_wait([self](boost::system::error_code ec) {
 		self->on_timer(ec);

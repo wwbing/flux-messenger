@@ -44,6 +44,8 @@ find_package(unofficial-mysql-connector-cpp CONFIG REQUIRED)
 # 查找 hiredis 包
 find_package(hiredis CONFIG REQUIRED)
 
+# 查找 spdlog 包
+find_package(spdlog CONFIG REQUIRED)
 
 # 添加可执行文件
 add_executable(main.out ${SRC} ${PROTO_SOURCES})
@@ -62,4 +64,5 @@ target_link_libraries(main.out
     dl      # 添加动态链接库
     pthread # 添加线程库
     hiredis::hiredis
+    spdlog::spdlog
 )

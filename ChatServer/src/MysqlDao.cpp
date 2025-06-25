@@ -3,16 +3,16 @@
 
 MysqlDao::MysqlDao()
 {
-	auto& cfg = ConfigMgr::Inst();
+	auto & cfg = ConfigMgr::Inst();
 	const auto& host = cfg["Mysql"]["Host"];
-	const auto& port = std::stoi(cfg["Mysql"]["Port"]);
+	const auto& port = cfg["Mysql"]["Port"];
 	const auto& pwd = cfg["Mysql"]["Passwd"];
 	const auto& schema = cfg["Mysql"]["Schema"];
 	const auto& user = cfg["Mysql"]["User"];
-	pool_.reset(new MySqlPool(host, port, user, pwd, schema, 5));
+	pool_.reset(new MySqlPool(host, std::stoi(port), user, pwd, schema, 5));
 }
 
-MysqlDao::~MysqlDao() {
+MysqlDao::~MysqlDao(){
 	pool_->Close();
 }
 
@@ -24,23 +24,26 @@ int MysqlDao::RegUser(const std::string& name, const std::string& email, const s
 			return -1;
 		}
 
+		// 调用存储过程
 		auto result = con->_session->sql("CALL reg_user(?, ?, ?, @result)")
 			.bind(name, email, pwd)
 			.execute();
 
+		// 获取存储过程的返回值
 		auto res = con->_session->sql("SELECT @result AS result").execute();
 		auto row = res.fetchOne();
 		if (row) {
-			int result_value = row[0].get<int>();
+			int ret = row[0];
+			std::cout << "Result: " << ret << std::endl;
 			pool_->returnConnection(std::move(con));
-			return result_value;
+			return ret;
 		}
 		pool_->returnConnection(std::move(con));
 		return -1;
 	}
 	catch (const mysqlx::Error& e) {
 		pool_->returnConnection(std::move(con));
-		std::cerr << "MySQL Error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 		return -1;
 	}
 }
@@ -52,11 +55,11 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
 			return false;
 		}
 
-		auto result = con->_session->sql("SELECT email FROM user WHERE name = ?")
+		auto res = con->_session->sql("SELECT email FROM user WHERE name = ?")
 			.bind(name)
 			.execute();
 
-		auto row = result.fetchOne();
+		auto row = res.fetchOne();
 		if (row) {
 			std::string db_email = row[0].get<std::string>();
 			std::cout << "Check Email: " << db_email << std::endl;
@@ -68,7 +71,7 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
 	}
 	catch (const mysqlx::Error& e) {
 		pool_->returnConnection(std::move(con));
-		std::cerr << "MySQL Error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 		return false;
 	}
 }
@@ -80,17 +83,18 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& newpwd) {
 			return false;
 		}
 
-		auto result = con->_session->sql("UPDATE user SET pwd = ? WHERE name = ?")
+		auto res = con->_session->sql("UPDATE user SET pwd = ? WHERE name = ?")
 			.bind(newpwd, name)
 			.execute();
 
-		std::cout << "Updated rows: " << result.getAffectedItemsCount() << std::endl;
+		int affected = res.getAffectedItemsCount();
+		std::cout << "Updated rows: " << affected << std::endl;
 		pool_->returnConnection(std::move(con));
-		return true;
+		return affected > 0;
 	}
 	catch (const mysqlx::Error& e) {
 		pool_->returnConnection(std::move(con));
-		std::cerr << "MySQL Error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 		return false;
 	}
 }

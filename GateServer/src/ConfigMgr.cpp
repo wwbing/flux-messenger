@@ -1,22 +1,23 @@
 #include "ConfigMgr.h"
+#include "const.h"
 ConfigMgr::ConfigMgr(){
-	// »ñÈ¡µ±Ç°¹¤×÷Ä¿Â¼  
+	// è·å–å½“å‰å·¥ä½œç›®å½•  
 	boost::filesystem::path current_path = boost::filesystem::current_path();
-	// ¹¹½¨config.iniÎÄ¼şµÄÍêÕûÂ·¾¶  
+	// æ„é€ config.iniæ–‡ä»¶çš„å®Œæ•´è·¯å¾„  
 	boost::filesystem::path config_path = current_path / "config.ini";
-	std::cout << "Config path: " << config_path << std::endl;
+	spdlog::info("é…ç½®æ–‡ä»¶è·¯å¾„: {}", config_path.string());
 
-	// Ê¹ÓÃBoost.PropertyTreeÀ´¶ÁÈ¡INIÎÄ¼ş  
+	// ä½¿ç”¨Boost.PropertyTreeè¯»å–INIæ–‡ä»¶  
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_ini(config_path.string(), pt);
 
 
-	// ±éÀúINIÎÄ¼şÖĞµÄËùÓĞsection  
+	// éå†INIæ–‡ä»¶ä¸­çš„æ‰€æœ‰section  
 	for (const auto& section_pair : pt) {
 		const std::string& section_name = section_pair.first;
 		const boost::property_tree::ptree& section_tree = section_pair.second;
 
-		// ¶ÔÓÚÃ¿¸ösection£¬±éÀúÆäËùÓĞµÄkey-value¶Ô  
+		// éå†æ¯ä¸ªsectionä¸‹çš„æ‰€æœ‰key-valueå¯¹  
 		std::map<std::string, std::string> section_config;
 		for (const auto& key_value_pair : section_tree) {
 			const std::string& key = key_value_pair.first;
@@ -25,17 +26,17 @@ ConfigMgr::ConfigMgr(){
 		}
 		SectionInfo sectionInfo;
 		sectionInfo._section_datas = section_config;
-		// ½«sectionµÄkey-value¶Ô±£´æµ½config_mapÖĞ  
+		// å°†sectionçš„key-valueå¯¹å­˜å…¥config_mapä¸­  
 		_config_map[section_name] = sectionInfo;
 	}
 
-	// Êä³öËùÓĞµÄsectionºÍkey-value¶Ô  
+	// æ‰“å°æ‰€æœ‰sectionçš„key-valueå¯¹  
 	for (const auto& section_entry : _config_map) {
 		const std::string& section_name = section_entry.first;
 		SectionInfo section_config = section_entry.second;
-		std::cout << "[" << section_name << "]" << std::endl;
+		spdlog::info("section: {}", section_name);
 		for (const auto& key_value_pair : section_config._section_datas) {
-			std::cout << key_value_pair.first << "=" << key_value_pair.second << std::endl;
+			spdlog::info("{}={}", key_value_pair.first, key_value_pair.second);
 		}
 	}
 

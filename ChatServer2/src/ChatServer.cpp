@@ -3,6 +3,7 @@
 
 #include "LogicSystem.h"
 #include <csignal>
+#include <ostream>
 #include <thread>
 #include <mutex>
 #include "AsioIOServicePool.h"
@@ -18,27 +19,33 @@ std::condition_variable cond_quit;
 std::mutex mutex_quit;
 
 int main()
-{
+{	
 	auto& cfg = ConfigMgr::Inst();
 	auto server_name = cfg["SelfServer"]["Name"];
 	try {
 		auto pool = AsioIOServicePool::GetInstance();
-		//将登录数设置为0
+        // 将登录数设置为0
+        std::cout<<"ChatServer 2 初始化设置登陆数为 0"<<std::endl;
 		RedisMgr::GetInstance()->HSet(LOGIN_COUNT, server_name, "0");
-		Defer derfer ([server_name]() {
+
+        Defer derfer([server_name]()
+            {
 				RedisMgr::GetInstance()->HDel(LOGIN_COUNT, server_name);
 				RedisMgr::GetInstance()->Close();
-			});
+			}
+		);
 
-		boost::asio::io_context  io_context;
-		auto port_str = cfg["SelfServer"]["Port"];
-		//创建Cserver智能指针
+
+        std::cout<<"ChatServer 2 : cfg SelfServer Port"<<cfg["SelfServer"]["Port"]<<std::endl;
+        auto port_str = cfg["SelfServer"]["Port"];
+
+        boost::asio::io_context io_context;
+		//创建Cserver智能指针------>这里开启了监听客户端主动的tcp连接请求
 		auto pointer_server = std::make_shared<CServer>(io_context, atoi(port_str.c_str()));
 		//启动定时器
 		pointer_server->StartTimer();
 
 		//定义一个GrpcServer
-
 		std::string server_address(cfg["SelfServer"]["Host"] + ":" + cfg["SelfServer"]["RPCPort"]);
 		ChatServiceImpl service;
 		grpc::ServerBuilder builder;

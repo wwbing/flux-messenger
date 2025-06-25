@@ -30,7 +30,7 @@ struct SectionInfo {
 		if (_section_datas.find(key) == _section_datas.end()) {
 			return "";
 		}
-		// ÕâÀï¿ÉÒÔÌí¼ÓÒ»Ð©±ß½ç¼ì²é  
+		// å¯åœ¨æ­¤å¤„æ·»åŠ ä¸€äº›è¾¹ç•Œæ£€æŸ¥
 		return _section_datas[key];
 	}
 
@@ -38,7 +38,7 @@ struct SectionInfo {
 		if (_section_datas.find(key) == _section_datas.end()) {
 			return "";
 		}
-		// ÕâÀï¿ÉÒÔÌí¼ÓÒ»Ð©±ß½ç¼ì²é  
+		// å¯åœ¨æ­¤å¤„æ·»åŠ ä¸€äº›è¾¹ç•Œæ£€æŸ¥
 		return _section_datas[key];
 	}
 };
@@ -62,7 +62,8 @@ public:
 			return *this;
 		}
 
-		this->_config_map = src._config_map;
+        this->_config_map = src._config_map;
+        return *this;
 	};
 
 	ConfigMgr(const ConfigMgr& src) {
@@ -77,7 +78,7 @@ public:
 	std::string GetValue(const std::string& section, const std::string & key);
 private:
 	ConfigMgr();
-	// ´æ´¢sectionºÍkey-value¶ÔµÄmap  
+	// å­˜å‚¨sectionå’Œkey-valueå¯¹çš„map  
 	std::map<std::string, SectionInfo> _config_map;
 };
 

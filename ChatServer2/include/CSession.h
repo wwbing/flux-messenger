@@ -1,81 +1,81 @@
 #pragma once
-#include <boost/asio.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast.hpp>
-#include <boost/asio.hpp>
-#include <queue>
-#include <mutex>
-#include <memory>
-#include "const.h"
 #include "MsgNode.h"
+#include "const.h"
+#include <boost/asio.hpp>
+#include <boost/beast.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <memory>
+#include <mutex>
+#include <queue>
 using namespace std;
 
-
-namespace beast = boost::beast;         // from <boost/beast.hpp>
-namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-
+namespace beast = boost::beast;   // from <boost/beast.hpp>
+namespace http = beast::http;     // from <boost/beast/http.hpp>
+namespace net = boost::asio;      // from <boost/asio.hpp>
+using tcp = boost::asio::ip::tcp; // from <boost/asio/ip/tcp.hpp>
 
 class CServer;
 class LogicSystem;
 
-class CSession: public std::enable_shared_from_this<CSession>
+class CSession : public std::enable_shared_from_this<CSession>
 {
 public:
-	CSession(boost::asio::io_context& io_context, CServer* server);
-	~CSession();
-	tcp::socket& GetSocket();
-	std::string& GetSessionId();
-	void SetUserId(int uid);
-	int GetUserId();
-	void Start();
-	void Send(char* msg,  short max_length, short msgid);
-	void Send(std::string msg, short msgid);
-	void Close();
-	std::shared_ptr<CSession> SharedSelf();
-	void AsyncReadBody(int length);
-	void AsyncReadHead(int total_len);
-	void NotifyOffline(int uid);
-	//ÅĞ¶ÏĞÄÌøÊÇ·ñ¹ıÆÚ
-	bool IsHeartbeatExpired(std::time_t& now);
-	//¸üĞÂĞÄÌø
-	void UpdateHeartbeat();
-	//´¦ÀíÒì³£Á¬½Ó
-	void DealExceptionSession();
+    CSession(boost::asio::io_context &io_context, CServer *server);
+    ~CSession();
+    tcp::socket &GetSocket();
+    std::string &GetSessionId();
+    void SetUserId(int uid);
+    int GetUserId();
+    void Start();
+    void Send(char *msg, short max_length, short msgid);
+    void Send(std::string msg, short msgid);
+    void Close();
+    std::shared_ptr<CSession> SharedSelf();
+    void AsyncReadBody(int length);
+    void AsyncReadHead(int total_len);
+    void NotifyOffline(int uid);
+    // åˆ¤æ–­å¿ƒè·³æ˜¯å¦è¿‡æœŸ
+    bool IsHeartbeatExpired(std::time_t &now);
+    // æ›´æ–°æ—¶é—´æˆ³
+    void UpdateHeartbeat();
+    // å¤„ç†å¼‚å¸¸session
+    void DealExceptionSession();
+
 private:
-	void asyncReadFull(std::size_t maxLength, std::function<void(const boost::system::error_code& , std::size_t)> handler);
-	void asyncReadLen(std::size_t  read_len, std::size_t total_len,
-		std::function<void(const boost::system::error_code&, std::size_t)> handler);
-	
-	
-	void HandleWrite(const boost::system::error_code& error, std::shared_ptr<CSession> shared_self);
-	tcp::socket _socket;
-	std::string _session_id;
-	char _data[MAX_LENGTH];
-	CServer* _server;
-	bool _b_close;
-	std::queue<shared_ptr<SendNode> > _send_que;
-	std::mutex _send_lock;
-	//ÊÕµ½µÄÏûÏ¢½á¹¹
-	std::shared_ptr<RecvNode> _recv_msg_node;
-	bool _b_head_parse;
-	//ÊÕµ½µÄÍ·²¿½á¹¹
-	std::shared_ptr<MsgNode> _recv_head_node;
-	int _user_uid;
-	//¼ÇÂ¼ÉÏ´Î½ÓÊÜÊı¾İµÄÊ±¼ä
-	std::atomic<time_t> _last_heartbeat;
-	//session Ëø
-	std::mutex _session_mtx;
+    void asyncReadFull(std::size_t maxLength, std::function<void(const boost::system::error_code &, std::size_t)> handler);
+    void asyncReadLen(std::size_t read_len, std::size_t total_len,
+                      std::function<void(const boost::system::error_code &, std::size_t)> handler);
+
+    void HandleWrite(const boost::system::error_code &error, std::shared_ptr<CSession> shared_self);
+    tcp::socket _socket;
+    std::string _session_id;
+    char _data[MAX_LENGTH];
+    CServer *_server;
+    bool _b_close;
+    std::queue<shared_ptr<SendNode>> _send_que;
+    std::mutex _send_lock;
+    // æ¥æ”¶æ¶ˆæ¯ç»“æ„
+    std::shared_ptr<RecvNode> _recv_msg_node;
+    bool _b_head_parse;
+    // æ¥æ”¶å¤´éƒ¨ç»“æ„
+    std::shared_ptr<MsgNode> _recv_head_node;
+    int _user_uid;
+    // è®°å½•ä¸Šæ¬¡æ”¶åˆ°æ•°æ®çš„æ—¶é—´
+    std::atomic<time_t> _last_heartbeat;
+    // session é”
+    std::mutex _session_mtx;
 };
 
-class LogicNode {
-	friend class LogicSystem;
+class LogicNode
+{
+    friend class LogicSystem;
+
 public:
-	LogicNode(shared_ptr<CSession>, shared_ptr<RecvNode>);
+    LogicNode(shared_ptr<CSession>, shared_ptr<RecvNode>);
+
 private:
-	shared_ptr<CSession> _session;
-	shared_ptr<RecvNode> _recvnode;
+    shared_ptr<CSession> _session;
+    shared_ptr<RecvNode> _recvnode;
 };

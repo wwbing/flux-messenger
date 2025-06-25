@@ -13,10 +13,10 @@ const redis_module = require('./redis')
  * @returns 
  */
 async function GetVarifyCode(call, callback) {
-    console.log("email is ", call.request.email)
+    console.log("邮箱: ", call.request.email)
     try{
         let query_res = await redis_module.GetRedis(const_module.code_prefix+call.request.email);
-        console.log("query_res is ", query_res)
+        console.log("查询结果: ", query_res)
         if(query_res == null){
 
         }
@@ -35,7 +35,7 @@ async function GetVarifyCode(call, callback) {
             }
         }
 
-        console.log("uniqueId is ", uniqueId)
+        console.log("生成的验证码: ", uniqueId)
         let text_str =  '您的验证码为'+ uniqueId +'请三分钟内完成注册'
         //发送邮件
         let mailOptions = {
@@ -46,7 +46,7 @@ async function GetVarifyCode(call, callback) {
         };
     
         let send_res = await emailModule.SendMail(mailOptions);
-        console.log("send res is ", send_res)
+        console.log("发送结果: ", send_res)
 
         callback(null, { email:  call.request.email,
             error:const_module.Errors.Success
@@ -54,7 +54,7 @@ async function GetVarifyCode(call, callback) {
         
  
     }catch(error){
-        console.log("catch error is ", error)
+        console.log("捕获到错误: ", error)
 
         callback(null, { email:  call.request.email,
             error:const_module.Errors.Exception
@@ -67,7 +67,7 @@ function main() {
     var server = new grpc.Server()
     server.addService(message_proto.VarifyService.service, { GetVarifyCode: GetVarifyCode })
     server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
-        console.log('varify server started')        
+        console.log('验证服务器已启动')        
     })
 }
 

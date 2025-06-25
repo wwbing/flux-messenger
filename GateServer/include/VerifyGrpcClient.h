@@ -22,7 +22,7 @@ public:
 	RPConPool(size_t poolSize, std::string host, std::string port)
 		: poolSize_(poolSize), host_(host), port_(port), b_stop_(false) {
 		std::string target = host + ":" + port;
-		std::cout << "RPConPool creating " << poolSize << " connections to: " << target << std::endl;
+		spdlog::info("RPConPool 创建中，连接池大小: {} 连接目的地: {}", poolSize, target);
 		
 		// 创建gRPC channel参数，强制使用指定地址
 		grpc::ChannelArguments args;
@@ -30,13 +30,11 @@ public:
 		args.SetInt(GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL, 1);
 		
 		for (size_t i = 0; i < poolSize_; ++i) {
-			std::shared_ptr<Channel> channel = grpc::CreateCustomChannel(target,
-				grpc::InsecureChannelCredentials(), args);
-			
-			std::cout << "RPConPool connection " << (i+1) << " created for target: " << target << std::endl;
+			std::shared_ptr<Channel> channel = grpc::CreateCustomChannel(target,grpc::InsecureChannelCredentials(), args);
+			spdlog::info("RPConPool connection {} 创建成功: {}", (i+1), target);
 			connections_.push(VarifyService::NewStub(channel));
 		}
-		std::cout << "RPConPool initialization completed with " << poolSize << " connections" << std::endl;
+		spdlog::info("RPConPool 初始化完成，创建 {} 个连接", poolSize);
 	}
 
 	~RPConPool() {

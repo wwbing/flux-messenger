@@ -96,7 +96,7 @@
 #### 1. 安装 vcpkg 依赖
 ```bash
 # 在每个C++服务目录下执行
-vcpkg install --x-manifest-root=.
+vcpkg install --x-manifest-root=. 
 ```
 
 #### 2. 安装 Node.js 依赖

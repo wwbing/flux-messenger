@@ -1,5 +1,6 @@
 ﻿#include "AsioIOServicePool.h"
 #include <iostream>
+#include <spdlog/spdlog.h>
 using namespace std;
 AsioIOServicePool::AsioIOServicePool(std::size_t size):_ioServices(size),
 _works(size), _nextIOService(0){
@@ -17,7 +18,7 @@ _works(size), _nextIOService(0){
 
 AsioIOServicePool::~AsioIOServicePool() {
 	Stop();
-	std::cout << "AsioIOServicePool destruct" << endl;
+	spdlog::info("AsioIOServicePool 析构");
 }
 
 boost::asio::io_context& AsioIOServicePool::GetIOService() {
