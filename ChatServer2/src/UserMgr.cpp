@@ -34,7 +34,7 @@ void UserMgr::RmvUserSession(int uid, std::string session_id)
 		}
 	
 		auto session_id_ = iter->second->GetSessionId();
-		//²»ÏàµÈËµÃ÷ÊÇÆäËûµØ·½µÇÂ¼ÁË
+		// å¦‚æœä¸æ˜¯åŒä¸€ä¸ªä¼šè¯ï¼Œä¸è¿›è¡Œåˆ é™¤æ“ä½œ
 		if (session_id_ != session_id) {
 			return;
 		}

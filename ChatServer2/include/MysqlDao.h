@@ -32,12 +32,11 @@ public:
 				// 获取当前时间戳
 				auto currentTime = std::chrono::system_clock::now().time_since_epoch();
 				long long timestamp = std::chrono::duration_cast<std::chrono::seconds>(currentTime).count();
-				
-				pool_.push(std::make_unique<SqlConnection>(
-					std::make_shared<mysqlx::Session>(std::move(session)), 
-					timestamp
-				));
-				std::cout << "mysql connection init success" << std::endl;
+
+                pool_.push(std::make_unique<SqlConnection>(
+                    std::make_shared<mysqlx::Session>(std::move(session)),
+                    timestamp));
+                spdlog::info("Mysql 连接建立成功: {}", i);
 			}
 
 			_check_thread = std::thread([this]() {
@@ -56,7 +55,7 @@ public:
 			_check_thread.detach();
 		}
 		catch (const mysqlx::Error& e) {
-			std::cout << "mysql pool init failed, error is " << e.what() << std::endl;
+			spdlog::error("Mysql 连接池初始化失败, 错误: {}", e.what());
 		}
 	}
 
@@ -82,7 +81,7 @@ public:
 				con->_last_oper_time = timestamp;
 			}
 			catch (const mysqlx::Error& e) {
-				std::cout << "Error keeping connection alive: " << e.what() << std::endl;
+				spdlog::error("Mysql 连接检查失败, 错误: {}", e.what());
 				auto session = mysqlx::Session(host_, std::stoi(port_), user_, pass_);
 				session.sql("USE " + schema_).execute();
 				con->_session = std::make_shared<mysqlx::Session>(std::move(session));
@@ -120,7 +119,7 @@ public:
 					con->_last_oper_time = timestamp;
 				}
 				catch (const mysqlx::Error& e) {
-					std::cout << "Error keeping connection alive: " << e.what() << std::endl;
+					spdlog::error("Mysql 连接检查失败, 错误: {}", e.what());
 					healthy = false;
 					_fail_count++;
 				}
@@ -159,11 +158,11 @@ public:
 				pool_.push(std::move(newCon));
 			}
 
-			std::cout << "mysql connection reconnect success" << std::endl;
+			spdlog::info("Mysql 连接重建成功");
 			return true;
 		}
 		catch (const mysqlx::Error& e) {
-			std::cout << "Reconnect failed, error is " << e.what() << std::endl;
+			spdlog::error("Mysql 连接重建失败, 错误: {}", e.what());
 			return false;
 		}
 	}

@@ -44,7 +44,7 @@ void RunServer() {
 	// 设置异步等待SIGINT信号
 	signals.async_wait([&server, &io_context](const boost::system::error_code& error, int signal_number) {
 		if (!error) {
-			std::cout << "关闭StatuServer GRPC服务器....." << std::endl;
+			spdlog::info("关闭StatuServer GRPC服务器.....");
 			server->Shutdown(); // 优雅地关闭服务器
 			io_context.stop(); 	// 停止io_context
 		}
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 		RedisMgr::GetInstance()->Close();
 	}
 	catch (std::exception const& e) {
-		std::cerr << "StatuServer 异常: " << e.what() << std::endl;
+		spdlog::error("StatuServer 异常: {}", e.what());
 		RedisMgr::GetInstance()->Close();
 		return EXIT_FAILURE;
 	}

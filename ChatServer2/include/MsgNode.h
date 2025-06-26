@@ -14,8 +14,9 @@ public:
 		_data[_total_len] = '\0';
 	}
 
-	~MsgNode() {
-		std::cout << "destruct MsgNode" << endl;
+    ~MsgNode()
+    {
+        spdlog::info("MsgNode析构");
 		delete[] _data;
 	}
 

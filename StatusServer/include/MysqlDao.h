@@ -47,7 +47,7 @@ public:
 			_check_thread.detach();
 		}
 		catch (const mysqlx::Error& e) {
-			std::cout << "mysql pool init failed, error is " << e.what() << std::endl;
+			spdlog::error("Myqsql 连接池初始化失败，错误： {}", e.what());
 		}
 	}
 
@@ -73,7 +73,7 @@ public:
 				con->_last_oper_time = timestamp;
 			}
 			catch (const mysqlx::Error& e) {
-				std::cout << "Error keeping connection alive: " << e.what() << std::endl;
+				spdlog::error("Myqsql 连接池保持连接失败，错误： {}", e.what());
 				mysqlx::SessionSettings settings(
 					host_, port_,
 					user_, pass_,

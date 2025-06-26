@@ -49,7 +49,7 @@ int main()
 		service.RegisterServer(pointer_server);
 		// 构建并启动gRPC服务器
 		std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-		std::cout << "RPC Server listening on " << server_address << std::endl;
+		spdlog::info("ChatServer1 RPC Server 正在监听: {}", server_address);
 
 		//单独启动一个线程处理grpc服务
 		std::thread  grpc_server_thread([&server]() {

@@ -34,7 +34,7 @@ int MysqlDao::RegUser(const std::string& name, const std::string& email, const s
 		auto row = res.fetchOne();
 		if (row) {
 			int ret = row[0];
-			std::cout << "Result: " << ret << std::endl;
+			spdlog::info("注册用户, 结果: {}", ret);
 			pool_->returnConnection(std::move(con));
 			return ret;
 		}
@@ -62,7 +62,7 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
 		auto row = res.fetchOne();
 		if (row) {
 			std::string db_email = row[0].get<std::string>();
-			std::cout << "Check Email: " << db_email << std::endl;
+			spdlog::info("查询邮箱, 邮箱: {}", db_email);
 			pool_->returnConnection(std::move(con));
 			return email == db_email;
 		}
@@ -88,7 +88,7 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& newpwd) {
 			.execute();
 
 		int affected = res.getAffectedItemsCount();
-		std::cout << "Updated rows: " << affected << std::endl;
+		spdlog::info("更新密码, 影响行数: {}", affected);
 		pool_->returnConnection(std::move(con));
 		return affected > 0;
 	}

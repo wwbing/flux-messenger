@@ -8,6 +8,7 @@
 #include "DistLock.h"
 #include <string>
 #include "CServer.h"
+#include "const.h"
 using namespace std;
 
 LogicSystem::LogicSystem():_b_stop(false), _p_server(nullptr){
@@ -24,7 +25,7 @@ LogicSystem::~LogicSystem(){
 void LogicSystem::PostMsgToQue(shared_ptr < LogicNode> msg) {
 	std::unique_lock<std::mutex> unique_lk(_mutex);
 	_msg_que.push(msg);
-	//��0��Ϊ1����֪ͨ�ź�
+	//从0变为1则通知信号
 	if (_msg_que.size() == 1) {
 		unique_lk.unlock();
 		_consume.notify_one();
@@ -40,16 +41,16 @@ void LogicSystem::SetServer(std::shared_ptr<CServer> pserver) {
 void LogicSystem::DealMsg() {
 	for (;;) {
 		std::unique_lock<std::mutex> unique_lk(_mutex);
-		//�ж϶���Ϊ�������������������ȴ������ͷ���
+		//判断队列为空且没有停止则等待条件变量通知
 		while (_msg_que.empty() && !_b_stop) {
 			_consume.wait(unique_lk);
 		}
 
-		//�ж��Ƿ�Ϊ�ر�״̬���������߼�ִ��������˳�ѭ��
+		//判断是否为关闭状态，如果是则处理逻辑执行完毕后退出循环
 		if (_b_stop ) {
 			while (!_msg_que.empty()) {
 				auto msg_node = _msg_que.front();
-				cout << "收到消息ID: " << msg_node->_recvnode->_msg_id << endl;
+				spdlog::info("收到消息ID: {}", msg_node->_recvnode->_msg_id);
 				auto call_back_iter = _fun_callbacks.find(msg_node->_recvnode->_msg_id);
 				if (call_back_iter == _fun_callbacks.end()) {
 					_msg_que.pop();
@@ -62,13 +63,13 @@ void LogicSystem::DealMsg() {
 			break;
 		}
 
-		//���û��ͣ������˵��������������
+		//如果没有停止则说明队列有数据处理
 		auto msg_node = _msg_que.front();
-		cout << "recv_msg id  is " << msg_node->_recvnode->_msg_id << endl;
+		spdlog::info("recv_msg id  is {}", msg_node->_recvnode->_msg_id);
 		auto call_back_iter = _fun_callbacks.find(msg_node->_recvnode->_msg_id);
 		if (call_back_iter == _fun_callbacks.end()) {
 			_msg_que.pop();
-			std::cout << "消息ID [" << msg_node->_recvnode->_msg_id << "] 未找到对应的处理函数" << std::endl;
+			spdlog::error("消息ID [{}] 未找到对应的处理函数", msg_node->_recvnode->_msg_id);
 			continue;
 		}
 		call_back_iter->second(msg_node->_session, msg_node->_recvnode->_msg_id, 
@@ -104,8 +105,7 @@ void LogicSystem::LoginHandler(shared_ptr<CSession> session, const short &msg_id
 	reader.parse(msg_data, root);
 	auto uid = root["uid"].asInt();
 	auto token = root["token"].asString();
-	std::cout << "用户登录，用户ID: " << uid << " 用户令牌: "
-		<< token << endl;
+	spdlog::info("用户登录，用户ID: {} 用户令牌: {}", uid, token);
 
 	Json::Value  rtvalue;
 	Defer defer([this, &rtvalue, session]() {
@@ -243,7 +243,7 @@ void LogicSystem::SearchInfo(std::shared_ptr<CSession> session, const short& msg
 	Json::Value root;
 	reader.parse(msg_data, root);
 	auto uid_str = root["uid"].asString();
-	std::cout << "用户搜索，搜索ID: " << uid_str << endl;
+	spdlog::info("用户搜索，搜索ID: {}", uid_str);
 
 	Json::Value  rtvalue;
 
@@ -271,8 +271,7 @@ void LogicSystem::AddFriendApply(std::shared_ptr<CSession> session, const short&
 	auto applyname = root["applyname"].asString();
 	auto bakname = root["bakname"].asString();
 	auto touid = root["touid"].asInt();
-	std::cout << "添加好友申请，用户ID: " << uid << " 申请人昵称: "
-		<< applyname << " 备注名: " << bakname << " 目标用户ID: " << touid << endl;
+	spdlog::info("添加好友申请，用户ID: {} 申请人昵称: {} 备注名: {} 目标用户ID: {}", uid, applyname, bakname, touid);
 
 	Json::Value  rtvalue;
 	rtvalue["error"] = ErrorCodes::Success;
@@ -350,7 +349,7 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session, const short
 	auto uid = root["fromuid"].asInt();
 	auto touid = root["touid"].asInt();
 	auto back_name = root["back"].asString();
-	std::cout << "好友验证，发起人ID: " << uid << " 验证目标ID: " << touid << std::endl;
+	spdlog::info("好友验证，发起人ID: {} 验证目标ID: {}", uid, touid);
 
 	Json::Value  rtvalue;
 	rtvalue["error"] = ErrorCodes::Success;
@@ -483,8 +482,8 @@ void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session, const short
 	for (const auto& txt_obj : arrays) {
 		auto content = txt_obj["content"].asString();
 		auto msgid = txt_obj["msgid"].asString();
-		std::cout << "消息内容: " << content << std::endl;
-		std::cout << "消息ID: " << msgid << std::endl;
+		spdlog::info("消息内容: {}", content);
+		spdlog::info("消息ID: {}", msgid);
 		auto *text_msg = text_msg_req.add_textmsgs();
 		text_msg->set_msgid(msgid);
 		text_msg->set_msgcontent(content);
@@ -500,7 +499,7 @@ void LogicSystem::HeartBeatHandler(std::shared_ptr<CSession> session, const shor
 	Json::Value root;
 	reader.parse(msg_data, root);
 	auto uid = root["fromuid"].asInt();
-	std::cout << "收到心跳包，用户ID: " << uid << std::endl;
+	spdlog::info("收到心跳包，用户ID: {}", uid);
 	Json::Value  rtvalue;
 	rtvalue["error"] = ErrorCodes::Success;
 	session->Send(rtvalue.toStyledString(), ID_HEARTBEAT_RSP);
@@ -522,7 +521,7 @@ void LogicSystem::GetUserByUid(std::string uid_str, Json::Value& rtvalue)
 
 	std::string base_key = USER_BASE_INFO + uid_str;
 
-	//���Ȳ�redis�в�ѯ�û���Ϣ
+	//首先查redis中查询用户信息
 	std::string info_str = "";
 	bool b_base = RedisMgr::GetInstance()->Get(base_key, info_str);
 	if (b_base) {
@@ -537,8 +536,7 @@ void LogicSystem::GetUserByUid(std::string uid_str, Json::Value& rtvalue)
 		auto desc = root["desc"].asString();
 		auto sex = root["sex"].asInt();
 		auto icon = root["icon"].asString();
-		std::cout << "用户信息 - ID: " << uid << " 用户名: "
-			<< name << " 密码: " << pwd << " 邮箱: " << email << " 头像: " << icon << endl;
+		spdlog::info("用户信息 - ID: {} 用户名: {} 密码: {} 邮箱: {} 头像: {}", uid, name, pwd, email, icon);
 
 		rtvalue["uid"] = uid;
 		rtvalue["pwd"] = pwd;
@@ -552,8 +550,8 @@ void LogicSystem::GetUserByUid(std::string uid_str, Json::Value& rtvalue)
 	}
 
 	auto uid = std::stoi(uid_str);
-	//redis��û�����ѯmysql
-	//��ѯ���ݿ�
+	//redis中没有则查询mysql
+	//查询数据库
 	std::shared_ptr<UserInfo> user_info = nullptr;
 	user_info = MysqlMgr::GetInstance()->GetUser(uid);
 	if (user_info == nullptr) {
@@ -561,7 +559,7 @@ void LogicSystem::GetUserByUid(std::string uid_str, Json::Value& rtvalue)
 		return;
 	}
 
-	//�����ݿ�����д��redis����
+	//将数据库数据写入redis缓存
 	Json::Value redis_root;
 	redis_root["uid"] = user_info->uid;
 	redis_root["pwd"] = user_info->pwd;
@@ -574,7 +572,7 @@ void LogicSystem::GetUserByUid(std::string uid_str, Json::Value& rtvalue)
 
 	RedisMgr::GetInstance()->Set(base_key, redis_root.toStyledString());
 
-	//��������
+	//返回数据
 	rtvalue["uid"] = user_info->uid;
 	rtvalue["pwd"] = user_info->pwd;
 	rtvalue["name"] = user_info->name;
@@ -591,7 +589,7 @@ void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
 
 	std::string base_key = NAME_INFO + name;
 
-	//���Ȳ�redis�в�ѯ�û���Ϣ
+	//首先查redis中查询用户信息
 	std::string info_str = "";
 	bool b_base = RedisMgr::GetInstance()->Get(base_key, info_str);
 	if (b_base) {
@@ -605,8 +603,7 @@ void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
 		auto nick = root["nick"].asString();
 		auto desc = root["desc"].asString();
 		auto sex = root["sex"].asInt();
-		std::cout << "用户信息 - ID: " << uid << " 用户名: "
-			<< name << " 密码: " << pwd << " 邮箱: " << email << endl;
+		spdlog::info("用户信息 - ID: {} 用户名: {} 密码: {} 邮箱: {}", uid, name, pwd, email);
 
 		rtvalue["uid"] = uid;
 		rtvalue["pwd"] = pwd;
@@ -618,8 +615,8 @@ void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
 		return;
 	}
 
-	//redis��û�����ѯmysql
-	//��ѯ���ݿ�
+	//redis中没有则查询mysql
+	//查询数据库
 	std::shared_ptr<UserInfo> user_info = nullptr;
 	user_info = MysqlMgr::GetInstance()->GetUser(name);
 	if (user_info == nullptr) {
@@ -627,7 +624,7 @@ void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
 		return;
 	}
 
-	//�����ݿ�����д��redis����
+	//将数据库数据写入redis缓存
 	Json::Value redis_root;
 	redis_root["uid"] = user_info->uid;
 	redis_root["pwd"] = user_info->pwd;
@@ -639,7 +636,7 @@ void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
 
 	RedisMgr::GetInstance()->Set(base_key, redis_root.toStyledString());
 	
-	//��������
+	//返回数据
 	rtvalue["uid"] = user_info->uid;
 	rtvalue["pwd"] = user_info->pwd;
 	rtvalue["name"] = user_info->name;
@@ -651,7 +648,7 @@ void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
 
 bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo)
 {
-	//���Ȳ�redis�в�ѯ�û���Ϣ
+	//首先查redis中查询用户信息
 	std::string info_str = "";
 	bool b_base = RedisMgr::GetInstance()->Get(base_key, info_str);
 	if (b_base) {
@@ -666,12 +663,11 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
 		userinfo->desc = root["desc"].asString();
 		userinfo->sex = root["sex"].asInt();
 		userinfo->icon = root["icon"].asString();
-		std::cout << "用户登录信息 - ID: " << userinfo->uid << " 用户名: "
-			<< userinfo->name << " 密码: " << userinfo->pwd << " 邮箱: " << userinfo->email << endl;
+		spdlog::info("用户登录信息 - ID: {} 用户名: {} 密码: {} 邮箱: {}", userinfo->uid, userinfo->name, userinfo->pwd, userinfo->email);
 	}
 	else {
-		//redis��û�����ѯmysql
-		//��ѯ���ݿ�
+		//redis中没有则查询mysql
+		//查询数据库
 		std::shared_ptr<UserInfo> user_info = nullptr;
 		user_info = MysqlMgr::GetInstance()->GetUser(uid);
 		if (user_info == nullptr) {
@@ -680,7 +676,7 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
 
 		userinfo = user_info;
 
-		//�����ݿ�����д��redis����
+		//将数据库数据写入redis缓存
 		Json::Value redis_root;
 		redis_root["uid"] = uid;
 		redis_root["pwd"] = userinfo->pwd;
@@ -697,11 +693,11 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
 }
 
 bool LogicSystem::GetFriendApplyInfo(int to_uid, std::vector<std::shared_ptr<ApplyInfo>> &list) {
-	//��mysql��ȡ���������б�
+	//从mysql获取好友申请列表
 	return MysqlMgr::GetInstance()->GetApplyList(to_uid, list, 0, 10);
 }
 
 bool LogicSystem::GetFriendList(int self_id, std::vector<std::shared_ptr<UserInfo>>& user_list) {
-	//��mysql��ȡ�����б�
+	//从mysql获取好友列表
 	return MysqlMgr::GetInstance()->GetFriendList(self_id, user_list);
 }

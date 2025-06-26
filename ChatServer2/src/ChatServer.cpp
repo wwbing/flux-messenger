@@ -25,7 +25,7 @@ int main()
 	try {
 		auto pool = AsioIOServicePool::GetInstance();
         // 将登录数设置为0
-        std::cout<<"ChatServer 2 初始化设置登陆数为 0"<<std::endl;
+        spdlog::info("ChatServer 2 初始化设置登陆数为 0");
 		RedisMgr::GetInstance()->HSet(LOGIN_COUNT, server_name, "0");
 
         Defer derfer([server_name]()
@@ -35,8 +35,7 @@ int main()
 			}
 		);
 
-
-        std::cout<<"ChatServer 2 : cfg SelfServer Port"<<cfg["SelfServer"]["Port"]<<std::endl;
+        spdlog::info("ChatServer 2 : cfg SelfServer Port {}", cfg["SelfServer"]["Port"]);
         auto port_str = cfg["SelfServer"]["Port"];
 
         boost::asio::io_context io_context;
@@ -55,7 +54,8 @@ int main()
 		service.RegisterServer(pointer_server);
 		// 构建并启动gRPC服务器
 		std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-		std::cout << "RPC Server listening on " << server_address << std::endl;
+		// 打印服务器地址
+		spdlog::info("ChatServer2 RPC 正在监听端口：{}", server_address);
 
 		//单独启动一个线程处理grpc服务
 		std::thread  grpc_server_thread([&server]() {

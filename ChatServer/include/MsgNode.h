@@ -15,7 +15,7 @@ public:
 	}
 
 	~MsgNode() {
-		std::cout << "destruct MsgNode" << endl;
+		spdlog::info("析构MsgNode");
 		delete[] _data;
 	}
 

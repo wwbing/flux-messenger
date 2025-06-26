@@ -140,8 +140,8 @@ bool ChatServiceImpl::GetBaseInfo(std::string base_key, int uid, std::shared_ptr
 		userinfo->desc = root["desc"].asString();
 		userinfo->sex = root["sex"].asInt();
 		userinfo->icon = root["icon"].asString();
-		std::cout << "用户登录信息 - ID: " << userinfo->uid << " 用户名: "
-			<< userinfo->name << " 密码: " << userinfo->pwd << " 邮箱: " << userinfo->email << endl;
+		// 打印用户登录信息
+		spdlog::info("用户登录信息 - ID: {} 用户名: {} 密码: {} 邮箱: {}", userinfo->uid, userinfo->name, userinfo->pwd, userinfo->email);
 	}
 	else {
 		// redis没有则查询mysql

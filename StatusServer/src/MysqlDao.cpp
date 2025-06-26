@@ -59,7 +59,7 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
 		auto row = result.fetchOne();
 		if (row) {
 			std::string db_email = row[0].get<std::string>();
-			std::cout << "Check Email: " << db_email << std::endl;
+			spdlog::info("检查邮箱: {}", db_email);
 			pool_->returnConnection(std::move(con));
 			return email == db_email;
 		}
@@ -84,13 +84,13 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& newpwd) {
 			.bind(newpwd, name)
 			.execute();
 
-		std::cout << "Updated rows: " << result.getAffectedItemsCount() << std::endl;
+		spdlog::info("UpdatePwd 影响行数: {}", result.getAffectedItemsCount());
 		pool_->returnConnection(std::move(con));
 		return true;
 	}
 	catch (const mysqlx::Error& e) {
 		pool_->returnConnection(std::move(con));
-		std::cerr << "MySQL Error: " << e.what() << std::endl;
+		spdlog::error("Mysql 异常: {}", e.what());
 		return false;
 	}
 }

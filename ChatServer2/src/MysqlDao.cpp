@@ -34,7 +34,7 @@ int MysqlDao::RegUser(const std::string& name, const std::string& email, const s
 		auto row = res.fetchOne();
 		if (row) {
 			int ret = row[0];
-			std::cout << "Result: " << ret << std::endl;
+			spdlog::info("Result: {}", ret);
 			pool_->returnConnection(std::move(con));
 			return ret;
 		}
@@ -43,7 +43,7 @@ int MysqlDao::RegUser(const std::string& name, const std::string& email, const s
 	}
 	catch (const mysqlx::Error& e) {
 		pool_->returnConnection(std::move(con));
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return -1;
 	}
 }
@@ -62,7 +62,7 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
 		auto row = res.fetchOne();
 		if (row) {
 			std::string db_email = row[0].get<std::string>();
-			std::cout << "Check Email: " << db_email << std::endl;
+			spdlog::info("Check Email: {}", db_email);
 			pool_->returnConnection(std::move(con));
 			return email == db_email;
 		}
@@ -71,7 +71,7 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
 	}
 	catch (const mysqlx::Error& e) {
 		pool_->returnConnection(std::move(con));
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return false;
 	}
 }
@@ -88,13 +88,13 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& newpwd) {
 			.execute();
 
 		int affected = res.getAffectedItemsCount();
-		std::cout << "Updated rows: " << affected << std::endl;
+		spdlog::info("Updated rows: {}", affected);
 		pool_->returnConnection(std::move(con));
 		return affected > 0;
 	}
 	catch (const mysqlx::Error& e) {
 		pool_->returnConnection(std::move(con));
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return false;
 	}
 }
@@ -131,7 +131,7 @@ bool MysqlDao::CheckPwd(const std::string& name, const std::string& pwd, UserInf
 		return true;
 	}
 	catch (const mysqlx::Error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return false;
 	}
 }
@@ -156,7 +156,7 @@ bool MysqlDao::AddFriendApply(const int& from, const int& to)
 		return res.getAffectedItemsCount() > 0;
 	}
 	catch (const mysqlx::Error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return false;
 	}
 }
@@ -179,7 +179,7 @@ bool MysqlDao::AuthFriendApply(const int& from, const int& to) {
 		return res.getAffectedItemsCount() > 0;
 	}
 	catch (const mysqlx::Error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return false;
 	}
 }
@@ -202,7 +202,7 @@ bool MysqlDao::AddFriend(const int& from, const int& to, std::string back_name) 
 		return res.getAffectedItemsCount() > 0;
 	}
 	catch (const mysqlx::Error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return false;
 	}
 }
@@ -236,7 +236,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
 		return userInfo;
 	}
 	catch (const mysqlx::Error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return nullptr;
 	}
 }
@@ -270,7 +270,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(std::string name)
 		return userInfo;
 	}
 	catch (const mysqlx::Error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return nullptr;
 	}
 }
@@ -307,7 +307,7 @@ bool MysqlDao::GetApplyList(int touid, std::vector<std::shared_ptr<ApplyInfo>>& 
 		return true;
 	}
 	catch (const mysqlx::Error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return false;
 	}
 }
@@ -341,7 +341,7 @@ bool MysqlDao::GetFriendList(int self_id, std::vector<std::shared_ptr<UserInfo>>
 		return true;
 	}
 	catch (const mysqlx::Error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		spdlog::error("Error: {}", e.what());
 		return false;
 	}
 }

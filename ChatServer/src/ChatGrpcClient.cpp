@@ -2,7 +2,7 @@
 #include "RedisMgr.h"
 #include "ConfigMgr.h"
 #include "UserMgr.h"
-
+#include "const.h"
 #include "CSession.h"
 #include "MysqlMgr.h"
 
@@ -77,8 +77,9 @@ bool ChatGrpcClient::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<
 		userinfo->desc = root["desc"].asString();
 		userinfo->sex = root["sex"].asInt();
 		userinfo->icon = root["icon"].asString();
-		std::cout << "user login uid is  " << userinfo->uid << " name  is "
-			<< userinfo->name << " pwd is " << userinfo->pwd << " email is " << userinfo->email << endl;
+		
+		spdlog::info("从Redis中查询到用户信息 uid: {} name: {} pwd: {} email: {} nick: {} desc: {} sex: {} icon: {}",
+			userinfo->uid, userinfo->name, userinfo->pwd, userinfo->email, userinfo->nick, userinfo->desc, userinfo->sex, userinfo->icon);
 	}
 	else {
 		// redis没有则查询mysql

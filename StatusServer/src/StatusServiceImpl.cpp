@@ -32,11 +32,7 @@ StatusServiceImpl::StatusServiceImpl()
         server.host = cfg[word]["Host"];
         server.name = cfg[word]["Name"];
 
-        std::cout << "StatusServer 维护："
-                  << cfg[word]["Name"]
-                  << " " << cfg[word]["Host"]
-                  << " " << cfg[word]["Port"]
-                  << std::endl;
+        spdlog::info("StatusServer 维护：{} {} {}", server.name, server.host, server.port);
 
         _servers[server.name] = server;
     }
@@ -113,7 +109,7 @@ ChatServer StatusServiceImpl::getChatServer()
         }
     }
 
-    std::cout << "返回 ["<< minServer.name<<"] 连接信息:" << minServer.host << ":" << minServer.port<< " 连接数: " << minServer.con_count << std::endl;
+    spdlog::info("返回 [{}] 连接信息:{}:{} 连接数: {}", minServer.name, minServer.host, minServer.port, minServer.con_count);
     return minServer;
 }
 

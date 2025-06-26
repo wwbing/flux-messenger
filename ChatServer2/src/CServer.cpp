@@ -10,13 +10,15 @@ CServer::CServer(boost::asio::io_context &io_context, short port)
       _port(port),
       _acceptor(io_context, tcp::endpoint(tcp::v4(),port)), _timer(_io_context, std::chrono::seconds(60))
 {
-	cout << "ChatServer 2 启动成功, 正在监听端口 : " << _port << endl;
+	// 打印服务器启动信息
+	spdlog::info("ChatServer 2 启动成功, 正在监听端口 : {}", _port);
 
 	StartAccept();
 }
 
 CServer::~CServer() {
-	cout << "ChatServer 2 关闭成功, 关闭监听端口 : " << _port << endl;
+	// 打印服务器关闭信息
+	spdlog::info("ChatServer 2 关闭成功, 关闭监听端口 : {}", _port);
 	
 }
 
@@ -27,7 +29,8 @@ void CServer::HandleAccept(shared_ptr<CSession> new_session, const boost::system
 		_sessions.insert(make_pair(new_session->GetSessionId(), new_session));
 	}
 	else {
-		cout << "Tcp长连接建立失败:accept fail " << error.what() << endl;
+		// 打印连接建立失败信息
+		spdlog::error("Tcp长连接建立失败:accept fail {}", error.what());
 	}
 
 	StartAccept();
@@ -80,7 +83,8 @@ bool CServer::CheckValid(std::string uuid)
 
 void CServer::on_timer(const boost::system::error_code& ec) {
 	if (ec) {
-		std::cout << "定时器错误: " << ec.message() << std::endl;
+		// 打印定时器错误信息
+		spdlog::error("定时器错误: {}", ec.message());
 		return;
 	}
 
@@ -111,7 +115,8 @@ void CServer::on_timer(const boost::system::error_code& ec) {
 	auto& cfg = ConfigMgr::Inst();
 	auto self_name = cfg["SelfServer"]["Name"];
     auto count_str = std::to_string(session_count);
-    cout<<"定时器上报ChatServer2 的连接数到redis中，当前连接数: "<<count_str<<endl;
+	// 打印定时器上报信息
+	spdlog::info("定时器上报ChatServer2 的连接数到redis中，当前连接数: {}", count_str);
 	RedisMgr::GetInstance()->HSet(LOGIN_COUNT, self_name, count_str);
 
 	// 处理异常session，防止资源泄漏

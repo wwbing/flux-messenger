@@ -17,7 +17,7 @@ _works(size), _nextIOService(0){
 
 AsioIOServicePool::~AsioIOServicePool() {
 	Stop();
-	std::cout << "AsioIOServicePool destruct" << endl;
+	spdlog::warn("AsioIOServicePool 析构调用");
 }
 
 boost::asio::io_context& AsioIOServicePool::GetIOService() {

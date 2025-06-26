@@ -2,6 +2,7 @@
 #include <memory>
 #include <mutex>
 #include <iostream>
+#include "const.h"
 using namespace std;
 template <typename T>
 class Singleton {
@@ -21,10 +22,10 @@ public:
 		return _instance;
 	}
 	void PrintAddress() {
-		std::cout << _instance.get() << endl;
+		spdlog::info("单例地址: {}", _instance.get());
 	}
 	~Singleton() {
-		std::cout << "this is singleton destruct" << std::endl;
+		spdlog::warn("单例析构调用");
 	}
 };
 

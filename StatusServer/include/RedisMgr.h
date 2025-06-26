@@ -23,7 +23,7 @@ public:
 
 			auto reply = (redisReply*)redisCommand(context, "AUTH %s", pwd);
 			if (reply->type == REDIS_REPLY_ERROR) {
-				std::cout << "Redis 验证失败" << std::endl;
+				spdlog::error("Redis 验证失败");
 				//执行成功 返回redisCommand执行结果redisReply占用的内存
 				freeReplyObject(reply);
 				continue;
@@ -31,7 +31,7 @@ public:
 
 			//执行成功 返回redisCommand执行结果redisReply占用的内存
 			freeReplyObject(reply);
-			std::cout << "Redis 验证成功" << std::endl;
+			spdlog::info("Redis 验证成功");
 			connections_.push(context);
 		}
 
@@ -132,7 +132,7 @@ private:
 				reply = (redisReply*)redisCommand(context, "PING");
 				//2. 检查 I/O 缓冲区是否被使用且未被写入
 				if (context->err) {
-					std::cout << "Connection error:" << context->err << std::endl;
+					spdlog::error("Redis 连接错误: {}", context->err);
 					if (reply) {
 						freeReplyObject(reply);
 					}
@@ -144,7 +144,7 @@ private:
 
 				//3. 再检查Redis返回的回复是否是ERROR
 				if (!reply || reply->type == REDIS_REPLY_ERROR) {
-					std::cout << "reply is null,  redis ping failed: " << std::endl;
+					spdlog::error("Redis Ping 失败，回复为空: {}", context->err);
 					if (reply) {
 						freeReplyObject(reply);
 					}
@@ -154,8 +154,6 @@ private:
 					continue;
 				}
 
-				//4.如果用户没有关闭连接，则返回连接
-				//std::cout << "connection alive" << std::endl;
 				freeReplyObject(reply);
 				returnConnection(context);
 			}catch(std::exception& exp){
@@ -192,7 +190,7 @@ private:
 
 		auto reply = (redisReply*)redisCommand(context, "AUTH %s", pwd_);
 		if (reply->type == REDIS_REPLY_ERROR) {
-			std::cout << "Redis 验证失败" << std::endl;
+			spdlog::error("Redis 验证失败");
 			//执行不返回
 			freeReplyObject(reply);
 			redisFree(context);
@@ -201,7 +199,7 @@ private:
 
 		//执行成功返回redisCommand执行结果redisReply占用的内存
 		freeReplyObject(reply);
-		std::cout << "Redis 验证成功" << std::endl;
+		spdlog::info("Redis 验证成功");
 		returnConnection(context);
 		return true;
 	}
@@ -219,7 +217,7 @@ private:
 				auto reply = (redisReply*)redisCommand(context, "PING");
                 if (!reply)
                 {
-                    std::cout << "回复为空，redis ping失败: " << std::endl;
+					spdlog::error("回复为空，Redis Ping失败");
 					connections_.push(context);
 					continue;
 				}
@@ -228,7 +226,7 @@ private:
 			}
             catch (std::exception &exp)
             {
-                std::cout << "保持连接活跃错误: " << exp.what() << std::endl;
+				spdlog::error("Redis 连接池保持连接错误: {}", exp.what());
 				redisFree(context);
 				context = redisConnect(host_, port_);
 				if (context == nullptr || context->err != 0) {
@@ -240,7 +238,7 @@ private:
 
 				auto reply = (redisReply*)redisCommand(context, "AUTH %s", pwd_);
 				if (reply->type == REDIS_REPLY_ERROR) {
-					std::cout << "Redis 验证失败" << std::endl;
+					spdlog::error("Redis 验证失败");
 					//执行成功 返回redisCommand执行结果redisReply占用的内存
 					freeReplyObject(reply);
 					continue;
@@ -248,7 +246,7 @@ private:
 
 				//执行成功 返回redisCommand执行结果redisReply占用的内存
 				freeReplyObject(reply);
-				std::cout << "Redis 验证成功" << std::endl;
+				spdlog::info("Redis 验证成功");
 				connections_.push(context);
 			}
 		}

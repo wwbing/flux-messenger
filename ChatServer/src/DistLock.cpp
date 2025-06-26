@@ -11,19 +11,19 @@
 #include <hiredis/hiredis.h>
 
 
-//���嵥��ģʽ
+// 单例模式
 DistLock& DistLock::Inst() {
 	static DistLock lock;
 	return lock;
 }
 
-// ʹ�� Boost UUID ����ȫ��Ψһ��ʶ����UUID��
+// 使用 Boost UUID 生成全局唯一标识的UUID
 static std::string generateUUID() {
 	boost::uuids::uuid uuid = boost::uuids::random_generator()();
 	return to_string(uuid);
 }
 
-// ���Ի�ȡ������������Ψһ��ʶ����UUID���������ȡʧ���򷵻ؿ��ַ���
+// 尝试获取分布式锁，返回唯一标识UUID，获取失败则返回空字符串
 std::string DistLock::acquireLock(redisContext* context, const std::string& lockName,
     int lockTimeout, int acquireTimeout) {
     std::string identifier = generateUUID();
@@ -31,39 +31,39 @@ std::string DistLock::acquireLock(redisContext* context, const std::string& lock
     auto endTime = std::chrono::steady_clock::now() + std::chrono::seconds(acquireTimeout);
 
     while (std::chrono::steady_clock::now() < endTime) {
-        // ʹ�� SET ����Լ�����SET lockKey identifier NX EX lockTimeout
+        // 使用 SET 命令尝试加锁 SET lockKey identifier NX EX lockTimeout
         redisReply* reply = (redisReply*)redisCommand(context, "SET %s %s NX EX %d",
             lockKey.c_str(), identifier.c_str(), lockTimeout);
         if (reply != nullptr) {
-            // �жϷ��ؽ���Ƿ�Ϊ OK
+            // 判断返回结果是否为 OK
             if (reply->type == REDIS_REPLY_STATUS && std::string(reply->str) == "OK") {
                 freeReplyObject(reply);
                 return identifier;
             }
             freeReplyObject(reply);
         }
-        // ��ͣ 1 ��������ԣ���ֹæ�ȴ�
+        // 休眠 1 毫秒后重试，防止忙等
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     return "";
 }
 
-// �ͷ�����ֻ�����ĳ����߲����ͷţ������Ƿ�ɹ�
+// 释放锁，只能持有该锁的客户端才能释放，返回是否成功
 bool DistLock::releaseLock(redisContext* context, const std::string& lockName,
     const std::string& identifier) {
     std::string lockKey = "lock:" + lockName;
-    // Lua �ű����ж�����ʶ�Ƿ�ƥ�䣬ƥ����ɾ����
+    // Lua 脚本判断锁标识是否匹配，匹配则删除
     const char* luaScript = "if redis.call('get', KEYS[1]) == ARGV[1] then \
                                 return redis.call('del', KEYS[1]) \
                              else \
                                 return 0 \
                              end";
-    // ���� EVAL ����ִ�� Lua �ű�����һ������Ϊ�ű�����������Ϊ key ��������key �Լ���Ӧ�Ĳ���
+    // 使用 EVAL 命令执行 Lua 脚本，第一个参数为脚本，第二个为key，第三个为参数
     redisReply* reply = (redisReply*)redisCommand(context, "EVAL %s 1 %s %s",
         luaScript, lockKey.c_str(), identifier.c_str());
     bool success = false;
     if (reply != nullptr) {
-        // ����������ֵΪ 1 ʱ����ʾ�ɹ�ɾ������
+        // 返回整数值为 1 时表示成功删除锁
         if (reply->type == REDIS_REPLY_INTEGER && reply->integer == 1) {
             success = true;
         }
