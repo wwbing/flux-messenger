@@ -32,7 +32,7 @@ public:
 
 			//执行成功后释放redisCommand执行后返回的redisReply所占用的内存
 			freeReplyObject(reply);
-			spdlog::info("认证成功");
+			spdlog::info("Redis 认证成功");
 			connections_.push(context);
 		}
 
@@ -71,7 +71,7 @@ public:
 			}
 			return !connections_.empty(); 
 			});
-		//���ֹͣ��ֱ�ӷ��ؿ�ָ��
+		//如果停止了，直接返回空指针
 		if (b_stop_) {
 			return  nullptr;
 		}
@@ -300,4 +300,3 @@ private:
 	RedisMgr();
 	unique_ptr<RedisConPool>  _con_pool;
 };
-

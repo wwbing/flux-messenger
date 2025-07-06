@@ -17,7 +17,15 @@ using namespace std;
 bool bstop = false;
 std::condition_variable cond_quit;
 std::mutex mutex_quit;
+/*
+    假设来了64个客户端的连接请求，此时Chatserver2服务器：
+        ioc线程池32个ioc线程，每个都对应2个客户端的连接。
+        Cserver维护了一个Cession的连接池，目前一共有64个连接。
 
+    然后这64个连接里面，每两个连接由一个ioc线程管理，IO多路复用隐藏在boost::asio内部 ，通过epoll实现
+	这就是经典的 Reactor 处理的模式
+
+*/
 int main()
 {	
 	auto& cfg = ConfigMgr::Inst();
@@ -25,7 +33,7 @@ int main()
 	try {
 		auto pool = AsioIOServicePool::GetInstance();
         // 将登录数设置为0
-        spdlog::info("ChatServer 2 初始化设置登陆数为 0");
+        spdlog::info("ChatServer2 初始化设置登陆数为 0");
 		RedisMgr::GetInstance()->HSet(LOGIN_COUNT, server_name, "0");
 
         Defer derfer([server_name]()
@@ -35,7 +43,7 @@ int main()
 			}
 		);
 
-        spdlog::info("ChatServer 2 : cfg SelfServer Port {}", cfg["SelfServer"]["Port"]);
+        spdlog::info("ChatServer2 : cfg SelfServer Port {}", cfg["SelfServer"]["Port"]);
         auto port_str = cfg["SelfServer"]["Port"];
 
         boost::asio::io_context io_context;

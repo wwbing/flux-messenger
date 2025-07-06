@@ -33,8 +33,8 @@ void RunServer() {
 	builder.RegisterService(&service);
 
 	// 构建并启动gRPC服务器
-	std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-	std::cout << "StatuServer GRPC服务器正在监听： " << server_address << std::endl;
+    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+    spdlog::info("StatuServer GRPC服务器已启动，正在监听: {}", server_address);
 
 	// 创建Boost.Asio的io_context
 	boost::asio::io_context io_context;

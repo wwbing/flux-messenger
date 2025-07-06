@@ -11,14 +11,14 @@ CServer::CServer(boost::asio::io_context &io_context, short port)
       _acceptor(io_context, tcp::endpoint(tcp::v4(),port)), _timer(_io_context, std::chrono::seconds(60))
 {
 	// 打印服务器启动信息
-	spdlog::info("ChatServer 2 启动成功, 正在监听端口 : {}", _port);
+	spdlog::info("ChatServer2 启动成功, 正在监听端口 : {}", _port);
 
 	StartAccept();
 }
 
 CServer::~CServer() {
 	// 打印服务器关闭信息
-	spdlog::info("ChatServer 2 关闭成功, 关闭监听端口 : {}", _port);
+	spdlog::info("ChatServer2 关闭成功, 关闭监听端口 : {}", _port);
 	
 }
 
