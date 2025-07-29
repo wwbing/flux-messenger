@@ -131,7 +131,7 @@ void HttpConnection::PreParseGetParam()
         size_t eq_pos = pair.find('=');
         if (eq_pos != std::string::npos)
         {
-            key = UrlDecode(pair.substr(0, eq_pos)); 	// 使用 url_decode 解码URL参数
+            key = UrlDecode(pair.substr(0, eq_pos)); // 使用 url_decode 解码URL参数
             value = UrlDecode(pair.substr(eq_pos + 1));
             _get_params[key] = value;
         }
@@ -155,13 +155,13 @@ void HttpConnection::HandleReq()
 {
     // 设置版本
     _response.version(_request.version());
-    
+
     // 关闭长连接
     _response.keep_alive(false);
-    
+
     // 设置允许跨域资源访问，实际生产环境应根据需求设置允许的源
     _response.set(boost::beast::http::field::access_control_allow_origin, "*");
-    
+
     if (_request.method() == http::verb::get)
     {
         PreParseGetParam();
@@ -211,10 +211,8 @@ void HttpConnection::CheckDeadline()
             {
                 // Close socket to cancel any outstanding operation.
                 boost::system::error_code tmpec = self->_socket.close(ec);
-                
             }
-        }
-    );
+        });
 }
 
 void HttpConnection::WriteResponse()

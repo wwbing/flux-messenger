@@ -21,7 +21,7 @@ class LogicSystem;
 
 class CSession : public std::enable_shared_from_this<CSession>
 {
-public:
+  public:
     CSession(boost::asio::io_context &io_context, CServer *server);
     ~CSession();
     tcp::socket &GetSocket();
@@ -43,7 +43,7 @@ public:
     // 处理异常session
     void DealExceptionSession();
 
-private:
+  private:
     void asyncReadFull(std::size_t maxLength, std::function<void(const boost::system::error_code &, std::size_t)> handler);
     void asyncReadLen(std::size_t read_len, std::size_t total_len,
                       std::function<void(const boost::system::error_code &, std::size_t)> handler);
@@ -72,10 +72,10 @@ class LogicNode
 {
     friend class LogicSystem;
 
-public:
+  public:
     LogicNode(shared_ptr<CSession>, shared_ptr<RecvNode>);
 
-private:
+  private:
     shared_ptr<CSession> _session;
     shared_ptr<RecvNode> _recvnode;
 };
